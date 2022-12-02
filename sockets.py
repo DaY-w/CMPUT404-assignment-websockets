@@ -107,6 +107,8 @@ def read_ws(ws, client):
             entData = ws.receive()
             if (entData is not None):
                 packet = json.loads(entData)
+                for key, value in packet["data"].items():
+                    myWorld.update(packet["entity"], key, value)
                 send_all_json(packet)
             else:
                 break
