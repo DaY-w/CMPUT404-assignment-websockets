@@ -103,10 +103,12 @@ def read_ws(ws, client):
     '''A greenlet function that reads from the websocket and updates the world'''
     try:
         while True:
-            msg = ws.receive()
-            print(msg)
-            if (msg is not None):
-                myWorld.update(json.loads(msg))
+            entData = ws.receive()
+            if (entData is not None):
+                packet = json.loads(entData)
+                for key, value in packet["data"].items():
+                    myWorld.update(packet["entity"], key, value)
+                send_all_json(packet)
             else:
                 break
     except:
@@ -123,7 +125,6 @@ def subscribe_socket(ws):
 
     try:
         while True:
-            # block here
             msg = client.get()
             ws.send(msg)
     except Exception as e:  # WebSocketError as e:

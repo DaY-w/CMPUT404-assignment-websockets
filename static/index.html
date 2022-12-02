@@ -143,11 +143,7 @@
         world[entity] = data;
         // drawNextFrame(); // (but should we?)
         //XXX: Send a XHTML Request that updates the entity you just modified!
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", `/entity/${entity}`, true);
-        xhr.setRequestHeader("Content-type", "application/json");
-        xhr.setRequestHeader("Accept", "application/json");
-        xhr.send(JSON.stringify(data));
+        socket.send(JSON.stringify({"entity": entity, "data":data}))
       }
       var counter = 0;
       function addEntityWithoutName(data) {
@@ -290,16 +286,36 @@
       function wsSetup() {
         var url = "ws://" + host + "/subscribe";
         socket = new WebSocket(url);
+
         socket.onopen = function () {
           //XXX: TODO What are you going to do here?
+          var xhr = new XMLHttpRequest();
+
+          xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4){ 
+              try{
+                if (xhr.status == 200){
+                  world = JSON.parse(xhr.responseText)
+                }
+              }catch (e){
+                alert("Error: " + e.name)
+              }
+            }
+          }
+          xhr.open("GET","/world", true);
+          xhr.send(null)
         };
         socket.onerror = function (msg) {
+          console.log(msg)
           debug("WebSocket Error:" + msg.data);
         };
         socket.onmessage = function (msg) {
           try {
             debug("WebSocket Recv:" + msg.data);
             //XXX: TODO What are you going to do here?
+            var message = JSON.parse(msg.data)
+            world[message["entity"]] = message["data"]
+            drawNextFrame()
           } catch (e) {
             alert("socket on message: " + e);
           }
